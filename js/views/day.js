@@ -1,7 +1,7 @@
 // Dia de jogo: presença e tamanho do time.
 import { listPlayers, getOpenDay, startDay, setPresence, closeDay, updateDaySettings, dayMatches, listDays } from '../store.js';
 import { dayStats } from '../rotation.js';
-import { esc, toast, todayIso, formatDate, plural } from '../ui.js';
+import { esc, toast, todayIso, formatDate, plural, askConfirm } from '../ui.js';
 import { openPlayerForm } from './players.js';
 
 export const title = 'Dia de jogo';
@@ -112,7 +112,7 @@ export async function render(root, ctx) {
   });
 
   root.querySelector('#close')?.addEventListener('click', async () => {
-    if (!confirm('Encerrar o dia? A partida em andamento (sem resultado) será descartada.')) return;
+    if (!(await askConfirm('Encerrar o dia? A partida em andamento (sem resultado) será descartada.'))) return;
     await closeDay(day.id);
     toast('Dia encerrado');
     ctx.rerender();

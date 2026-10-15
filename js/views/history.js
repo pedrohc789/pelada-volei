@@ -1,6 +1,6 @@
 // Histórico de partidas por dia (times e vencedor; sem números de MMR).
 import { listDays, dayMatches, listPlayers, undoLast } from '../store.js';
-import { esc, formatDate, plural, toast } from '../ui.js';
+import { esc, formatDate, plural, toast, askConfirm } from '../ui.js';
 
 export const title = 'Histórico';
 
@@ -34,7 +34,7 @@ export async function render(root, ctx) {
 
   root.querySelectorAll('[data-undo]').forEach((b) =>
     b.addEventListener('click', async () => {
-      if (!confirm('Desfazer o último resultado? O MMR volta ao que era antes.')) return;
+      if (!(await askConfirm('Desfazer o último resultado? O MMR volta ao que era antes.'))) return;
       await undoLast(b.dataset.undo);
       toast('Resultado desfeito');
       ctx.rerender();

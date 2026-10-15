@@ -1,7 +1,7 @@
 // Cadastro do grupo. Listas mostram só nomes; o MMR aparece apenas na ficha do jogador.
 import { listPlayers, getPlayer, savePlayer, setPlayerActive, resetPlayerMmr } from '../store.js';
 import { LEVELS } from '../elo.js';
-import { esc, openDialog, closeDialog, toast, plural } from '../ui.js';
+import { esc, openDialog, closeDialog, toast, plural, askConfirm } from '../ui.js';
 
 export const title = 'Jogadores';
 
@@ -72,7 +72,7 @@ export async function openPlayerForm(id, ctx, { onSaved } = {}) {
       ctx.rerender();
     });
     dlg.querySelector('#reset')?.addEventListener('click', async () => {
-      if (!confirm('Voltar o MMR para o valor do nível selecionado?')) return;
+      if (!(await askConfirm('Voltar o MMR para o valor do nível selecionado?'))) return;
       await savePlayer({ id: p.id, name: form.elements.name.value, level: form.level.value });
       await resetPlayerMmr(p.id);
       closeDialog();

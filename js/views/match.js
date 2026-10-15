@@ -2,7 +2,7 @@
 // Não mostra MMR individual — só um indicador geral de equilíbrio.
 import { getOpenDay, listPlayers, dayMatches, proposeMatch, swapPlayers, recordResult, undoLast, pendingChance } from '../store.js';
 import { dayStats, MAX_STREAK } from '../rotation.js';
-import { esc, toast, plural } from '../ui.js';
+import { esc, toast, plural, askConfirm } from '../ui.js';
 
 export const title = 'Partida';
 
@@ -98,7 +98,7 @@ export async function render(root, ctx) {
   root.querySelectorAll('[data-win]').forEach((b) =>
     b.addEventListener('click', async () => {
       const w = b.dataset.win;
-      if (!confirm(`Confirmar vitória do Time ${w}?`)) return;
+      if (!(await askConfirm(`Confirmar vitória do Time ${w}?`))) return;
       selected = null;
       await recordResult(day.id, w);
       toast(`Vitória do Time ${w} registrada`);
@@ -113,13 +113,13 @@ export async function render(root, ctx) {
     ctx.rerender();
   });
   root.querySelector('#full').addEventListener('click', async () => {
-    if (pending.streakA > 1 && !confirm('O vencedor sairá da quadra antes do limite. Fazer sorteio completo?')) return;
+    if (pending.streakA > 1 && !(await askConfirm('O vencedor sairá da quadra antes do limite. Fazer sorteio completo?'))) return;
     selected = null;
     await proposeMatch(day.id, { reroll: true, forceDraw: true });
     ctx.rerender();
   });
   root.querySelector('#undo')?.addEventListener('click', async () => {
-    if (!confirm('Desfazer o último resultado? O MMR volta ao que era antes.')) return;
+    if (!(await askConfirm('Desfazer o último resultado? O MMR volta ao que era antes.'))) return;
     selected = null;
     await undoLast(day.id);
     toast('Resultado desfeito');

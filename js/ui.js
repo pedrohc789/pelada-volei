@@ -23,6 +23,25 @@ export function openDialog(html, onReady) {
   return dlg;
 }
 
+// Confirmação própria do app: o confirm() nativo é bloqueado em alguns navegadores/PWAs
+// (retorna false sem mostrar nada). Resolve true só ao tocar no botão de confirmar.
+export function askConfirm(message, okLabel = 'Confirmar') {
+  const dlg = document.getElementById('confirm');
+  dlg.innerHTML = `
+    <form method="dialog" class="form">
+      <p>${esc(message)}</p>
+      <div class="actions">
+        <button value="no" class="btn">Cancelar</button>
+        <button value="yes" class="btn primary">${esc(okLabel)}</button>
+      </div>
+    </form>`;
+  dlg.returnValue = '';
+  return new Promise((resolve) => {
+    dlg.addEventListener('close', () => resolve(dlg.returnValue === 'yes'), { once: true });
+    dlg.showModal();
+  });
+}
+
 export function closeDialog() {
   document.getElementById('dialog').close();
 }

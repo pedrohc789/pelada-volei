@@ -1,7 +1,7 @@
 // Backup e informações do app.
 import { exportAll, importAll, wipeAll } from '../store.js';
 import { MAX_STREAK } from '../rotation.js';
-import { toast, todayIso } from '../ui.js';
+import { toast, todayIso, askConfirm } from '../ui.js';
 
 export const title = 'Configurações';
 
@@ -43,7 +43,7 @@ export async function render(root, ctx) {
     if (!file) return;
     try {
       const data = JSON.parse(await file.text());
-      if (!confirm(`Substituir todos os dados atuais pelo backup (${data.players?.length ?? 0} jogadores)?`)) return;
+      if (!(await askConfirm(`Substituir todos os dados atuais pelo backup (${data.players?.length ?? 0} jogadores)?`))) return;
       await importAll(data);
       toast('Backup importado');
       ctx.rerender();
@@ -55,8 +55,8 @@ export async function render(root, ctx) {
   });
 
   root.querySelector('#wipe').addEventListener('click', async () => {
-    if (!confirm('Apagar TODOS os jogadores, dias e partidas deste aparelho?')) return;
-    if (!confirm('Tem certeza? Isso não pode ser desfeito (exporte um backup antes).')) return;
+    if (!(await askConfirm('Apagar TODOS os jogadores, dias e partidas deste aparelho?'))) return;
+    if (!(await askConfirm('Tem certeza? Isso não pode ser desfeito (exporte um backup antes).'))) return;
     await wipeAll();
     toast('Dados apagados');
     ctx.rerender();
