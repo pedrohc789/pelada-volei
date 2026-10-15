@@ -17,8 +17,13 @@ Abra http://localhost:8080 (app) e http://localhost:8080/tests/ (testes do algor
 
 ## Usar no celular
 
-Precisa estar publicado em HTTPS (ex.: GitHub Pages). No celular, abra o link e use
-"Adicionar à tela inicial". Ao publicar uma versão nova, incremente `VERSION` em `sw.js`.
+Publicado em **https://pedrohc789.github.io/pelada-volei/** (GitHub Pages, branch `main`).
+
+- Android (Chrome): ⋮ → "Instalar app".
+- iPhone (Safari): Compartilhar → "Adicionar à Tela de Início".
+
+Para atualizar: commit + `git push`; o Pages republica em ~1 minuto. Incremente `VERSION`
+em `sw.js` a cada versão para os celulares trocarem o cache.
 
 ## Regras do sorteio
 
