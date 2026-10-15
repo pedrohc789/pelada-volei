@@ -330,3 +330,13 @@ dialog::backdrop { background: rgb(0 0 0 / .6); }
 .level-ticks span { position: absolute; transform: translateX(-50%); white-space: nowrap; }
 .level-ticks span:first-child { transform: translateX(-14px); }
 .level-ticks span:last-child { transform: translateX(calc(-100% + 14px)); }
+
+/* ---------- Descanso ---------- */
+.resting { margin-top: 16px; padding: 12px; border-radius: 16px; border: 1px dashed var(--line); background: rgb(255 255 255 / .02); }
+.resting .sec { margin-bottom: 4px; }
+.rest-row { display: flex; align-items: center; gap: 10px; padding: 8px 0; }
+.rest-row + .rest-row { border-top: 1px solid var(--line); }
+.rest-row .grow { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.rest-row small { color: var(--muted); font-size: .75rem; }
+.rest-pick { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.rest-opts { display: flex; flex-direction: column; gap: 8px; }

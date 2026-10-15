@@ -1,8 +1,8 @@
 // Camada de serviço: regras do app sobre o IndexedDB.
 import * as db from './db.js';
-import { levelMmr, computeDeltas, winChance } from './elo.js';
-import { nextMatch } from './rotation.js';
-import { matchKey } from './balance.js';
+import { levelMmr, computeDeltas, winChance, avgMmr } from './elo.js';
+import { nextMatch, activeRestingIds, dayStats } from './rotation.js';
+import { matchKey, pickGroup } from './balance.js';
 
 const byName = (a, b) => a.name.localeCompare(b.name, 'pt-BR', { sensitivity: 'base' });
 
@@ -70,7 +70,9 @@ export async function setPresence(dayId, presentIds) {
     // Se alguém do jogo proposto saiu, refaz a proposta.
     if (![...pending.teamA, ...pending.teamB].every((id) => set.has(id))) pending = null;
   }
-  await db.put('days', { ...day, presentIds, pending });
+  // Quem foi embora deixa de "descansar".
+  const resting = Object.fromEntries(Object.entries(day.resting || {}).filter(([id]) => presentIds.includes(id)));
+  await db.put('days', { ...day, presentIds, pending, resting });
 }
 
 export async function closeDay(dayId) {
@@ -87,8 +89,10 @@ export async function dayMatches(dayId) {
 export async function proposeMatch(dayId, { reroll = false, forceDraw = false } = {}) {
   const day = await db.get('days', dayId);
   const players = new Map((await db.getAll('players')).map((p) => [p.id, p]));
-  const present = day.presentIds.map((id) => players.get(id)).filter(Boolean);
   const matches = await dayMatches(dayId);
+  // Quem está descansando fica fora do sorteio (sem perder a prioridade da fila).
+  const resting = activeRestingIds(day.resting, matches.length + 1);
+  const present = day.presentIds.filter((id) => !resting.has(id)).map((id) => players.get(id)).filter(Boolean);
   let avoidKey = null;
   if (reroll && day.pending) {
     const get = (ids) => ids.map((id) => ({ id }));
@@ -106,6 +110,58 @@ export async function proposeMatch(dayId, { reroll = false, forceDraw = false } 
   };
   await db.put('days', { ...day, pending });
   return { pending };
+}
+
+// ---------- Descanso ----------
+
+// mode: 'next' (só o próximo jogo dele) ou 'until' (até avisar).
+// Se a pessoa está no jogo sorteado, sai só ela: entra quem tem prioridade no banco,
+// escolhido para manter a média do time. Retorna {error} se não houver gente para jogar.
+export async function restPlayer(dayId, playerId, mode) {
+  const day = await db.get('days', dayId);
+  const matches = await dayMatches(dayId);
+  const num = matches.length + 1;
+  const pend = day.pending;
+  const inGame = !!pend && (pend.teamA.includes(playerId) || pend.teamB.includes(playerId));
+  // No banco com um jogo já sorteado, ele já está fora desse jogo: o descanso vale para o seguinte.
+  const untilSeq = mode === 'until' ? null : pend && !inGame ? num + 1 : num;
+  const resting = { ...(day.resting || {}), [playerId]: { untilSeq } };
+  let pending = pend;
+  let redraw = false;
+
+  if (inGame) {
+    const players = new Map((await db.getAll('players')).map((p) => [p.id, p]));
+    const restingNow = activeRestingIds(resting, num);
+    const onCourt = new Set([...pend.teamA, ...pend.teamB]);
+    const bench = day.presentIds.filter((id) => !onCourt.has(id) && !restingNow.has(id)).map((id) => players.get(id)).filter(Boolean);
+    const key = pend.teamA.includes(playerId) ? 'teamA' : 'teamB';
+    if (bench.length) {
+      const team = pend[key].map((id) => players.get(id)).filter(Boolean);
+      const rest = team.filter((p) => p.id !== playerId);
+      const [sub] = pickGroup(bench, 1, dayStats(matches), { target: avgMmr(team), base: rest });
+      pending = { ...pend, [key]: pend[key].map((id) => (id === playerId ? sub.id : id)) };
+    } else {
+      pending = null; // sem banco: refaz o sorteio do jogo sem ele
+      redraw = true;
+    }
+  }
+  await db.put('days', { ...day, resting, pending });
+  if (redraw) {
+    const r = await proposeMatch(dayId);
+    if (r.error) {
+      // Desfaz o descanso se não sobrar gente para jogar.
+      await db.put('days', { ...(await db.get('days', dayId)), resting: day.resting || {}, pending: pend });
+      return { error: r.error };
+    }
+  }
+  return { untilSeq };
+}
+
+export async function endRest(dayId, playerId) {
+  const day = await db.get('days', dayId);
+  const resting = { ...(day.resting || {}) };
+  delete resting[playerId];
+  await db.put('days', { ...day, resting });
 }
 
 // Troca dois jogadores entre times ou entre time e banco (ajuste manual do organizador).

@@ -4,9 +4,9 @@
 //  3. Intervalo — resultado registrado; o próximo jogo só é sorteado ao tocar no botão.
 //  4. Dia encerrado — fechamento com o botão do wrapped.
 // Não mostra MMR individual — só um indicador geral de equilíbrio.
-import { getOpenDay, listDays, closeDay, listPlayers, dayMatches, proposeMatch, swapPlayers, recordResult, undoLast, pendingChance } from '../store.js';
-import { dayStats, stayingTeam, MAX_STREAK } from '../rotation.js';
-import { esc, toast, plural, askConfirm, formatDate, shortDate, initials, pad2 } from '../ui.js';
+import { getOpenDay, listDays, closeDay, listPlayers, dayMatches, proposeMatch, swapPlayers, recordResult, undoLast, pendingChance, restPlayer, endRest } from '../store.js';
+import { dayStats, stayingTeam, MAX_STREAK, activeRestingIds } from '../rotation.js';
+import { esc, toast, plural, askConfirm, formatDate, shortDate, initials, pad2, openDialog, closeDialog } from '../ui.js';
 
 export const title = 'Partida';
 
@@ -49,7 +49,7 @@ export async function render(root, ctx) {
   const kick = `${shortDate(day.date)} · ${plural(day.presentIds.length, 'presente', 'presentes')}`;
 
   let pending = day.pending;
-  if (!pending && matches.length) return renderBreak(root, ctx, day, matches, names, kick);
+  if (!pending && matches.length) return renderBreak(root, ctx, day, matches, names, kick, byId);
   if (!pending) {
     const r = await proposeMatch(day.id);
     if (r.error) return renderError(root, r.error);
@@ -75,7 +75,8 @@ function renderGame(root, ctx, day, pending, matches, byId, name, kick) {
   const stats = dayStats(matches);
   const games = (id) => stats[id]?.games || 0;
   const onCourt = new Set([...pending.teamA, ...pending.teamB]);
-  const bench = day.presentIds.filter((id) => !onCourt.has(id)).sort((a, b) => games(a) - games(b));
+  const resting = activeRestingIds(day.resting, num);
+  const bench = day.presentIds.filter((id) => !onCourt.has(id) && !resting.has(id)).sort((a, b) => games(a) - games(b));
   const chanceA = Math.round(pendingChance(pending, byId) * 100);
 
   // Jogador como botão (toque em dois para trocar de lugar); no banco mostra partidas hoje.
@@ -105,7 +106,9 @@ function renderGame(root, ctx, day, pending, matches, byId, name, kick) {
     <div class="sec"><h3>No banco</h3><small>partidas hoje</small></div>
     ${bench.length ? `<div class="bench">${bench.map((id) => pl(id, '')).join('')}</div>` : '<p class="muted small">Ninguém no banco.</p>'}
     <p class="hint">Toque em dois jogadores para trocá-los de lugar.</p>
-    <div class="tools">
+    ${restingSection(day, num, byId)}
+    <button class="btn block" id="rest" style="margin-top:14px">☕ Descansar</button>
+    <div class="tools" style="margin-top:0">
       <button class="btn" id="reroll">↻ Sortear de novo</button>
       <button class="btn" id="full">Sorteio completo</button>
     </div>
@@ -158,6 +161,7 @@ function renderGame(root, ctx, day, pending, matches, byId, name, kick) {
   root.querySelector('#close-day').addEventListener('click', () =>
     endDay(day, ctx, `Encerrar o dia com ${plural(matches.length, 'jogo', 'jogos')}? O jogo ${pad2(num)}, em andamento, será descartado (sem resultado).`),
   );
+  bindRest(root, ctx, day, num, byId, pending);
 }
 
 // ---------- 2. Fim de jogo: confirmar resultado ----------
@@ -197,7 +201,7 @@ function renderFinish(root, ctx, day, pending, num, names, kick) {
 
 // ---------- 3. Intervalo: resultado registrado, próximo jogo sob demanda ----------
 
-function renderBreak(root, ctx, day, matches, names, kick) {
+function renderBreak(root, ctx, day, matches, names, kick, byId) {
   const last = matches[matches.length - 1];
   const next = last.seq + 1;
   const winIds = last.winner === 'A' ? last.teamA : last.teamB;
@@ -218,9 +222,12 @@ function renderBreak(root, ctx, day, matches, names, kick) {
       <p style="margin:0">${nextText}</p>
     </section>
     <button class="btn primary block big" id="draw">Sortear jogo ${pad2(next)}</button>
+    ${restingSection(day, next, byId)}
+    <button class="btn block" id="rest">☕ Descansar</button>
     <button class="btn block" id="close-day">🏁 Encerrar o dia</button>
     <button class="btn ghost block" id="undo">Desfazer resultado do jogo ${pad2(last.seq)}</button>
   `;
+  bindRest(root, ctx, day, next, byId, null);
   root.querySelector('#draw').addEventListener('click', async (e) => {
     e.target.disabled = true;
     const r = await proposeMatch(day.id);
@@ -273,4 +280,89 @@ async function undo(day, ctx) {
   await undoLast(day.id);
   toast('Resultado desfeito');
   ctx.rerender();
+}
+
+// ---------- Descanso ----------
+
+// Lista de quem está descansando no jogo `num`, com quando volta e o botão "Voltar".
+function restingSection(day, num, byId) {
+  const ids = [...activeRestingIds(day.resting, num)];
+  if (!ids.length) return '';
+  const until = (id) => {
+    const u = day.resting[id].untilSeq;
+    return u == null ? 'até avisar' : `volta no jogo ${pad2(u + 1)}`;
+  };
+  return `
+    <div class="resting">
+      <div class="sec"><h3>☕ Descansando</h3></div>
+      ${ids.map((id) => `
+        <div class="rest-row">
+          <span class="av">${esc(initials(byId.get(id)?.name))}</span>
+          <span class="grow"><b>${esc(byId.get(id)?.name || '?')}</b><small>${until(id)}</small></span>
+          <button class="btn small" data-back="${id}">Voltar</button>
+        </div>`).join('')}
+    </div>`;
+}
+
+function bindRest(root, ctx, day, num, byId, pending) {
+  root.querySelectorAll('[data-back]').forEach((b) =>
+    b.addEventListener('click', async () => {
+      const nm = byId.get(b.dataset.back)?.name || 'Jogador';
+      if (!(await askConfirm(`${nm} volta para a fila agora?`, 'Voltar'))) return;
+      await endRest(day.id, b.dataset.back);
+      toast(`${nm} voltou para a fila`);
+      ctx.rerender();
+    }),
+  );
+  root.querySelector('#rest')?.addEventListener('click', () => openRestDialog(ctx, day, num, byId, pending));
+}
+
+function openRestDialog(ctx, day, num, byId, pending) {
+  const resting = activeRestingIds(day.resting, num);
+  const onCourt = new Set(pending ? [...pending.teamA, ...pending.teamB] : []);
+  const ids = day.presentIds
+    .filter((id) => !resting.has(id) && byId.has(id))
+    .sort((a, b) => byId.get(a).name.localeCompare(byId.get(b).name, 'pt-BR'));
+  // Só o próximo jogo dele: se está no jogo sorteado, é este; se está no banco com jogo sorteado, o seguinte.
+  const nextFor = (id) => (pending && !onCourt.has(id) ? num + 1 : num);
+
+  openDialog(`
+    <div class="form">
+      <h2>☕ Descansar</h2>
+      <div id="rest-step">
+        <p class="muted small" style="margin:0 0 10px">Quem vai descansar? Ele sai do sorteio e volta depois com a vez dele na fila.</p>
+        <div class="rest-pick">
+          ${ids.map((id) => `
+            <button class="pl" data-pick="${id}">
+              <span class="av ${pending?.teamA.includes(id) ? 'a' : pending?.teamB.includes(id) ? 'b' : ''}">${esc(initials(byId.get(id).name))}</span>
+              <span class="nm">${esc(byId.get(id).name)}</span>
+            </button>`).join('')}
+        </div>
+      </div>
+      <button type="button" class="btn ghost" data-close>Cancelar</button>
+    </div>`, (dlg) => {
+    dlg.querySelectorAll('[data-pick]').forEach((b) =>
+      b.addEventListener('click', () => {
+        const id = b.dataset.pick;
+        const nm = esc(byId.get(id).name);
+        const playing = onCourt.has(id);
+        dlg.querySelector('#rest-step').innerHTML = `
+          <p style="margin:0 0 12px"><b>${nm}</b> vai descansar por quanto tempo?</p>
+          ${playing ? '<p class="muted small" style="margin:0 0 12px">Está no jogo sorteado: entra outro do banco no lugar.</p>' : ''}
+          <div class="rest-opts">
+            <button class="btn primary" data-mode="next">Só o jogo ${pad2(nextFor(id))}</button>
+            <button class="btn" data-mode="until">Até eu avisar</button>
+          </div>`;
+        dlg.querySelectorAll('[data-mode]').forEach((m) =>
+          m.addEventListener('click', async () => {
+            m.disabled = true;
+            const r = await restPlayer(day.id, id, m.dataset.mode);
+            closeDialog();
+            toast(r.error ? r.error : `${byId.get(id).name} está descansando`);
+            ctx.rerender();
+          }),
+        );
+      }),
+    );
+  });
 }

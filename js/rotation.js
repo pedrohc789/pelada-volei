@@ -18,6 +18,16 @@ export function dayStats(matches) {
   return stats;
 }
 
+// Quem está descansando no jogo `nextSeq`. resting: {id: {untilSeq}}; untilSeq = último jogo
+// que a pessoa pula, ou null para "até avisar". Passado o untilSeq, ela volta sozinha.
+export function activeRestingIds(resting, nextSeq) {
+  return new Set(
+    Object.entries(resting || {})
+      .filter(([, r]) => r.untilSeq == null || nextSeq <= r.untilSeq)
+      .map(([id]) => id),
+  );
+}
+
 // Time que fica na quadra após a última partida (ou null se é hora de sorteio completo).
 export function stayingTeam(matches) {
   const last = matches[matches.length - 1];

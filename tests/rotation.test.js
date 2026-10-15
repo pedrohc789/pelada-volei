@@ -1,6 +1,6 @@
 import { describe, it, assert, eq } from './runner.js';
 import { makeRng } from '../js/rng.js';
-import { nextMatch, dayStats } from '../js/rotation.js';
+import { nextMatch, dayStats, activeRestingIds } from '../js/rotation.js';
 
 function roster(n, rng) {
   return Array.from({ length: n }, (_, i) => ({ id: `p${i}`, mmr: 800 + Math.round(rng() * 600), games: 20 }));
@@ -95,5 +95,33 @@ describe('Rodízio', () => {
     eq(m.reason, 'vencedor-fica-substituicao');
     eq(m.teamA.length, 6);
     assert(!m.teamA.some((p) => p.id === leaving));
+  });
+});
+
+describe('Descanso', () => {
+  it('"só o próximo jogo" vale até o untilSeq e depois volta sozinho', () => {
+    const resting = { p1: { untilSeq: 4 } };
+    eq([...activeRestingIds(resting, 4)], ['p1']);
+    eq([...activeRestingIds(resting, 5)], []);
+  });
+
+  it('"até avisar" continua valendo', () => {
+    const resting = { p2: { untilSeq: null } };
+    eq([...activeRestingIds(resting, 1)], ['p2']);
+    eq([...activeRestingIds(resting, 99)], ['p2']);
+  });
+
+  it('sem descanso registrado não quebra', () => {
+    eq(activeRestingIds(undefined, 3).size, 0);
+  });
+
+  it('vencedor que vai descansar é substituído e o time continua', () => {
+    const all = roster(18, makeRng(11));
+    const ms = simulate(all, 1, () => 'A');
+    const resting = activeRestingIds({ [ms[0].teamA[1]]: { untilSeq: 2 } }, 2);
+    const present = all.filter((p) => !resting.has(p.id));
+    const m = nextMatch({ present, matches: ms, teamSize: 6, rng: makeRng(4) });
+    eq(m.reason, 'vencedor-fica-substituicao');
+    assert(!m.teamA.some((p) => resting.has(p.id)) && !m.teamB.some((p) => resting.has(p.id)));
   });
 });
