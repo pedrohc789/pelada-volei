@@ -28,16 +28,25 @@ export function openDialog(html, onReady) {
 export function askConfirm(message, okLabel = 'Confirmar') {
   const dlg = document.getElementById('confirm');
   dlg.innerHTML = `
-    <form method="dialog" class="form">
+    <div class="form">
       <p>${esc(message)}</p>
       <div class="actions">
-        <button value="no" class="btn">Cancelar</button>
-        <button value="yes" class="btn primary">${esc(okLabel)}</button>
+        <button type="button" value="no" class="btn">Cancelar</button>
+        <button type="button" value="yes" class="btn primary">${esc(okLabel)}</button>
       </div>
-    </form>`;
-  dlg.returnValue = '';
+    </div>`;
+  // Resolve direto no clique: o evento 'close' do <dialog> nem sempre dispara (aba em segundo plano).
   return new Promise((resolve) => {
-    dlg.addEventListener('close', () => resolve(dlg.returnValue === 'yes'), { once: true });
+    const finish = (ok) => {
+      dlg.oncancel = null;
+      dlg.close();
+      resolve(ok);
+    };
+    dlg.querySelectorAll('button').forEach((b) => b.addEventListener('click', () => finish(b.value === 'yes')));
+    dlg.oncancel = (e) => {
+      e.preventDefault(); // Esc / voltar do Android
+      finish(false);
+    };
     dlg.showModal();
   });
 }

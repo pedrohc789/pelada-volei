@@ -151,7 +151,8 @@ export async function recordResult(dayId, winner) {
     });
   }
   await db.write(ops);
-  return proposeMatch(dayId);
+  // O próximo jogo só é sorteado quando o organizador pede (tela de intervalo).
+  return match;
 }
 
 // Desfaz o último resultado do dia e volta a partida para "em andamento".
