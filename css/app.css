@@ -340,3 +340,8 @@ dialog::backdrop { background: rgb(0 0 0 / .6); }
 .rest-row small { color: var(--muted); font-size: .75rem; }
 .rest-pick { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
 .rest-opts { display: flex; flex-direction: column; gap: 8px; }
+
+/* Ações da Partida em grade 2×2; um botão sobrando ocupa a linha inteira. */
+.menu-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 14px 0 10px; }
+.menu-grid .btn { min-height: 52px; padding: 10px 8px; font-size: .9rem; }
+.menu-grid .btn:last-child:nth-child(odd) { grid-column: 1 / -1; }

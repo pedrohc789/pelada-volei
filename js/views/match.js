@@ -108,10 +108,12 @@ function renderGame(root, ctx, day, pending, matches, byId, name, kick) {
     ${bench.length ? `<div class="bench">${bench.map((id) => pl(id, '')).join('')}</div>` : '<p class="muted small">Ninguém no banco.</p>'}
     <p class="hint">Toque em dois jogadores para trocá-los de lugar.</p>
     ${restingSection(day, num, byId)}
-    <button class="btn block" id="rest" style="margin-top:14px">☕ Descansar</button>
-    <button class="btn block" id="reroll">↻ Sortear de novo</button>
-    ${matches.length ? '<button class="btn block" id="stats">📈 Estatísticas do dia</button>' : ''}
-    <button class="btn block" id="close-day">🏁 Encerrar o dia</button>
+    <div class="menu-grid">
+      <button class="btn" id="rest">☕ Descansar</button>
+      <button class="btn" id="reroll">↻ Sortear de novo</button>
+      ${matches.length ? '<button class="btn" id="stats">📈 Estatísticas</button>' : ''}
+      <button class="btn" id="close-day">🏁 Encerrar dia</button>
+    </div>
     ${matches.length ? '<button class="btn ghost block" id="undo">Desfazer resultado do jogo anterior</button>' : ''}
   `;
   justStarted = false;
@@ -218,9 +220,11 @@ function renderBreak(root, ctx, day, matches, names, kick, byId) {
     </section>
     <button class="btn primary block big" id="draw">Sortear jogo ${pad2(next)}</button>
     ${restingSection(day, next, byId)}
-    <button class="btn block" id="rest">☕ Descansar</button>
-    <button class="btn block" id="stats">📈 Estatísticas do dia</button>
-    <button class="btn block" id="close-day">🏁 Encerrar o dia</button>
+    <div class="menu-grid">
+      <button class="btn" id="rest">☕ Descansar</button>
+      <button class="btn" id="stats">📈 Estatísticas</button>
+      <button class="btn" id="close-day">🏁 Encerrar dia</button>
+    </div>
     <button class="btn ghost block" id="undo">Desfazer resultado do jogo ${pad2(last.seq)}</button>
   `;
   bindRest(root, ctx, day, next, byId, null);
