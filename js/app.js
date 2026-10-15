@@ -30,6 +30,15 @@ async function render() {
   }
 }
 
+// Altura real da tela: no iPhone em modo app (tela de início) o 100dvh do CSS fica curto
+// e sobra uma faixa vazia embaixo da barra de abas.
+function syncAppHeight() {
+  document.documentElement.style.setProperty('--app-h', `${window.innerHeight}px`);
+}
+syncAppHeight();
+window.addEventListener('resize', syncAppHeight);
+window.addEventListener('orientationchange', () => setTimeout(syncAppHeight, 300));
+
 window.addEventListener('hashchange', () => {
   document.getElementById('app').scrollTop = 0; // nova tela começa do topo
   render();

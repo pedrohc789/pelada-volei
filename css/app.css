@@ -32,6 +32,8 @@ body {
   background: radial-gradient(120% 50% at 50% 0%, #17222e 0%, var(--bg) 65%) var(--bg);
   height: 100%;
   height: 100dvh;
+  /* No iPhone instalado na tela de início o 100dvh fica menor que a tela; o app.js mede a altura real. */
+  height: var(--app-h, 100dvh);
   display: flex; flex-direction: column;
   overflow: hidden;
 }
@@ -56,7 +58,7 @@ body.own-header main { padding-top: calc(16px + env(safe-area-inset-top)); }
   flex: none; z-index: 5;
   display: flex; justify-content: space-around;
   background: rgb(11 15 20 / .96); border-top: 1px solid var(--line);
-  padding: 8px 4px calc(8px + env(safe-area-inset-bottom));
+  padding: 8px 4px max(8px, env(safe-area-inset-bottom));
 }
 .tabbar a {
   flex: 1; display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 2px 0;
