@@ -2,10 +2,11 @@
 //  1. Jogo em andamento — times, ajustes manuais, "Time X venceu".
 //  2. Fim de jogo — confere e confirma o resultado (nada é gravado antes disso).
 //  3. Intervalo — resultado registrado; o próximo jogo só é sorteado ao tocar no botão.
+//  4. Dia encerrado — fechamento com o botão do wrapped.
 // Não mostra MMR individual — só um indicador geral de equilíbrio.
-import { getOpenDay, listPlayers, dayMatches, proposeMatch, swapPlayers, recordResult, undoLast, pendingChance } from '../store.js';
+import { getOpenDay, listDays, closeDay, listPlayers, dayMatches, proposeMatch, swapPlayers, recordResult, undoLast, pendingChance } from '../store.js';
 import { dayStats, stayingTeam, MAX_STREAK } from '../rotation.js';
-import { esc, toast, plural, askConfirm } from '../ui.js';
+import { esc, toast, plural, askConfirm, formatDate } from '../ui.js';
 
 export const title = 'Partida';
 
@@ -26,10 +27,7 @@ const pendingKey = (p) => `${p.teamA.join(',')}|${p.teamB.join(',')}`;
 
 export async function render(root, ctx) {
   const day = await getOpenDay();
-  if (!day) {
-    root.innerHTML = `<section class="card"><h2>Nenhum dia aberto</h2><p class="muted">Marque quem veio para começar.</p><a class="btn primary block" href="#/dia">Iniciar dia</a></section>`;
-    return;
-  }
+  if (!day) return renderClosed(root);
   const [players, matches] = await Promise.all([listPlayers(), dayMatches(day.id)]);
   const byId = new Map(players.map((p) => [p.id, p]));
   const name = (id) => esc(byId.get(id)?.name || '?');
@@ -199,7 +197,7 @@ function renderBreak(root, ctx, day, matches, names) {
       <p>${nextText}</p>
     </section>
     <button class="btn primary block big" id="draw">Sortear jogo nº ${next}</button>
-    <a class="btn block" href="#/wrapped/${day.id}">🎁 Ver wrapped do dia até agora</a>
+    <button class="btn block" id="close-day">🏁 Encerrar o dia</button>
     <button class="btn ghost block" id="undo">Desfazer resultado do jogo nº ${last.seq}</button>
   `;
   root.querySelector('#draw').addEventListener('click', async (e) => {
@@ -211,6 +209,32 @@ function renderBreak(root, ctx, day, matches, names) {
     document.getElementById('app').scrollTo({ top: 0 });
   });
   root.querySelector('#undo').addEventListener('click', () => undo(day, ctx));
+  root.querySelector('#close-day').addEventListener('click', async () => {
+    if (!(await askConfirm(`Encerrar o dia com ${plural(matches.length, 'jogo', 'jogos')}?`, 'Encerrar dia'))) return;
+    await closeDay(day.id);
+    ctx.rerender();
+    document.getElementById('app').scrollTo({ top: 0 });
+  });
+}
+
+// ---------- 4. Sem dia aberto: fechamento do último dia + wrapped ----------
+
+async function renderClosed(root) {
+  const last = (await listDays())[0];
+  const games = last ? (await dayMatches(last.id)).length : 0;
+  if (!last || !games) {
+    root.innerHTML = `<section class="card"><h2>Nenhum dia aberto</h2><p class="muted">Marque quem veio para começar.</p><a class="btn primary block" href="#/dia">Iniciar dia</a></section>`;
+    return;
+  }
+  root.innerHTML = `
+    <section class="card done">
+      <span class="eyebrow">🏁 Dia encerrado</span>
+      <h2>Pelada de ${formatDate(last.date)}</h2>
+      <p>${plural(games, 'jogo', 'jogos')} · ${plural(last.presentIds.length, 'presente', 'presentes')}</p>
+    </section>
+    <a class="btn primary block big" href="#/wrapped/${last.id}">🎁 Ver wrapped do dia</a>
+    <a class="btn block" href="#/dia">Iniciar novo dia</a>
+  `;
 }
 
 async function undo(day, ctx) {

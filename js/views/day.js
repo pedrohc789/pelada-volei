@@ -116,7 +116,7 @@ export async function render(root, ctx) {
     if (!(await askConfirm('Encerrar o dia? A partida em andamento (sem resultado) será descartada.'))) return;
     await closeDay(day.id);
     toast('Dia encerrado');
-    location.hash = `#/wrapped/${day.id}`; // fecha o dia com o resumo
+    location.hash = '#/partida'; // tela de dia encerrado, com o botão do wrapped
   });
 }
 
