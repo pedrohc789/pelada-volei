@@ -67,7 +67,8 @@ const COLS = [
   { key: 'streak', label: 'Seq', title: 'Maior sequência de vitórias' },
 ];
 
-function openStats(day, matches, byId) {
+// byId: Map id → nome. Usado também pela tela da Partida.
+export function openStats(day, matches, byId) {
   const w = computeWrapped(matches);
   // Inclui quem estava presente mas não entrou em quadra.
   const ids = [...new Set([...day.presentIds, ...Object.keys(w.perPlayer)])];

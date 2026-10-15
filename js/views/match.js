@@ -6,6 +6,7 @@
 // Não mostra MMR individual — só um indicador geral de equilíbrio.
 import { getOpenDay, listDays, closeDay, listPlayers, dayMatches, proposeMatch, swapPlayers, recordResult, undoLast, pendingChance, restPlayer, endRest } from '../store.js';
 import { dayStats, stayingTeam, MAX_STREAK, activeRestingIds } from '../rotation.js';
+import { openStats } from './history.js';
 import { esc, toast, plural, askConfirm, formatDate, shortDate, initials, pad2, openDialog, closeDialog } from '../ui.js';
 
 export const title = 'Partida';
@@ -109,6 +110,7 @@ function renderGame(root, ctx, day, pending, matches, byId, name, kick) {
     ${restingSection(day, num, byId)}
     <button class="btn block" id="rest" style="margin-top:14px">☕ Descansar</button>
     <button class="btn block" id="reroll">↻ Sortear de novo</button>
+    ${matches.length ? '<button class="btn block" id="stats">📈 Estatísticas do dia</button>' : ''}
     <button class="btn block" id="close-day">🏁 Encerrar o dia</button>
     ${matches.length ? '<button class="btn ghost block" id="undo">Desfazer resultado do jogo anterior</button>' : ''}
   `;
@@ -154,6 +156,7 @@ function renderGame(root, ctx, day, pending, matches, byId, name, kick) {
     endDay(day, ctx, `Encerrar o dia com ${plural(matches.length, 'jogo', 'jogos')}? O jogo ${pad2(num)}, em andamento, será descartado (sem resultado).`),
   );
   bindRest(root, ctx, day, num, byId, pending);
+  bindStats(root, day, matches, byId);
 }
 
 // ---------- 2. Fim de jogo: confirmar resultado ----------
@@ -216,10 +219,12 @@ function renderBreak(root, ctx, day, matches, names, kick, byId) {
     <button class="btn primary block big" id="draw">Sortear jogo ${pad2(next)}</button>
     ${restingSection(day, next, byId)}
     <button class="btn block" id="rest">☕ Descansar</button>
+    <button class="btn block" id="stats">📈 Estatísticas do dia</button>
     <button class="btn block" id="close-day">🏁 Encerrar o dia</button>
     <button class="btn ghost block" id="undo">Desfazer resultado do jogo ${pad2(last.seq)}</button>
   `;
   bindRest(root, ctx, day, next, byId, null);
+  bindStats(root, day, matches, byId);
   root.querySelector('#draw').addEventListener('click', async (e) => {
     e.target.disabled = true;
     const r = await proposeMatch(day.id);
@@ -357,4 +362,10 @@ function openRestDialog(ctx, day, num, byId, pending) {
       }),
     );
   });
+}
+
+function bindStats(root, day, matches, byId) {
+  root.querySelector('#stats')?.addEventListener('click', () =>
+    openStats(day, matches, new Map([...byId].map(([id, p]) => [id, p.name]))),
+  );
 }
