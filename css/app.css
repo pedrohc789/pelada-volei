@@ -116,7 +116,7 @@ details.card[open] > summary { margin-bottom: 10px; }
 .checks input { width: 22px; height: 22px; accent-color: var(--primary); }
 
 input[type=search], input[type=date], input:not([type]), select {
-  font: inherit; color: var(--text); background: var(--bg);
+  font: inherit; font-size: 16px; color: var(--text); background: var(--bg);
   border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; min-height: 44px; width: 100%;
 }
 input[type=search] { margin-bottom: 8px; }
@@ -155,9 +155,12 @@ label.inline input, label.inline select { width: auto; }
 .rules li { margin-bottom: 6px; }
 .file { cursor: pointer; }
 
+/* Janelas presas ao topo: com o teclado do celular aberto, os botões continuam visíveis. */
 dialog {
   border: 0; border-radius: var(--radius); padding: 0; width: min(92vw, 440px);
   background: var(--card); color: var(--text);
+  margin: calc(12px + env(safe-area-inset-top)) auto auto;
+  max-height: calc(100dvh - 24px - env(safe-area-inset-top)); overflow-y: auto;
 }
 dialog::backdrop { background: rgb(0 0 0 / .45); }
 .form { padding: 16px; display: flex; flex-direction: column; gap: 12px; }
@@ -225,10 +228,9 @@ dialog::backdrop { background: rgb(0 0 0 / .45); }
 @keyframes wIn { from { transform: translateY(16px) scale(.97); opacity: 0; } to { transform: none; opacity: 1; } }
 @media (prefers-reduced-motion: reduce) { .w-slide { animation: none; } }
 
-.share-text { font: inherit; font-size: .9rem; color: var(--text); background: var(--bg); border: 1px solid var(--line); border-radius: 10px; padding: 10px; width: 100%; resize: vertical; }
+.share-text { font: inherit; font-size: 16px; color: var(--text); background: var(--bg); border: 1px solid var(--line); border-radius: 10px; padding: 10px; width: 100%; resize: vertical; }
 
 /* Estatísticas do dia */
-.stats-dlg { max-height: 85vh; overflow-y: auto; }
 .kpis { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
 .kpis div { background: var(--bg); border-radius: 10px; padding: 8px; display: flex; flex-direction: column; text-align: center; }
 .kpis strong { font-size: 1.2rem; }
@@ -240,3 +242,6 @@ dialog::backdrop { background: rgb(0 0 0 / .45); }
 .stats-table th { cursor: pointer; color: var(--muted); font-weight: 600; user-select: none; }
 .stats-table th.sorted { color: var(--primary); }
 .stats-table th[data-dir]:not([data-dir=""])::after { content: " " attr(data-dir); font-size: .7rem; }
+
+/* iOS dá zoom em campos com fonte < 16px; garante 16px em qualquer campo. */
+input, select, textarea { font-size: max(16px, 1em); }
