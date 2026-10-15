@@ -30,12 +30,18 @@ export async function render(root, ctx) {
 
 export async function openPlayerForm(id, ctx, { onSaved } = {}) {
   const p = id ? await getPlayer(id) : null;
-  const levelOpts = LEVELS.map((l) => `<option value="${l.id}" ${(p ? p.level : 'intermediario') === l.id ? 'selected' : ''}>${l.label}</option>`).join('');
+  const levelId = p ? p.level : 'intermediario';
+  const levelIdx = Math.max(0, LEVELS.findIndex((l) => l.id === levelId));
   openDialog(`
     <form method="dialog" class="form" id="pform">
       <h2>${p ? 'Ficha do jogador' : 'Novo jogador'}</h2>
       <label>Nome<input name="name" required maxlength="40" autocomplete="off" value="${esc(p?.name)}"></label>
-      <label>Nível inicial<select name="level">${levelOpts}</select></label>
+      <div class="level-field">
+        <div class="level-head"><span>Nível inicial</span><strong id="level-label">${LEVELS[levelIdx].label}</strong></div>
+        <input type="range" class="level-range" id="level-range" min="0" max="${LEVELS.length - 1}" step="1" value="${levelIdx}" aria-label="Nível inicial" aria-valuetext="${LEVELS[levelIdx].label}">
+        <input type="hidden" name="level" value="${LEVELS[levelIdx].id}">
+        <div class="level-ticks">${LEVELS.map((l, i) => `<span style="left:${(i / (LEVELS.length - 1)) * 100}%">${l.label}</span>`).join('')}</div>
+      </div>
       ${p ? `
         <div class="stats">
           <div><span class="muted">MMR atual</span><strong id="mmr">${p.mmr}</strong></div>
@@ -54,10 +60,20 @@ export async function openPlayerForm(id, ctx, { onSaved } = {}) {
     </form>`, (dlg) => {
     const form = dlg.querySelector('#pform');
     if (!p) setTimeout(() => form.elements.name.focus(), 50);
+    const range = dlg.querySelector('#level-range');
+    const syncLevel = () => {
+      const lvl = LEVELS[Number(range.value)];
+      form.elements.level.value = lvl.id;
+      dlg.querySelector('#level-label').textContent = lvl.label;
+      range.setAttribute('aria-valuetext', lvl.label);
+      range.style.setProperty('--fill', `${(range.value / (LEVELS.length - 1)) * 100}%`);
+    };
+    range.addEventListener('input', syncLevel);
+    syncLevel();
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
       try {
-        const saved = await savePlayer({ id: p?.id, name: form.elements.name.value, level: form.level.value });
+        const saved = await savePlayer({ id: p?.id, name: form.elements.name.value, level: form.elements.level.value });
         closeDialog();
         toast(p ? 'Jogador atualizado' : 'Jogador cadastrado');
         if (onSaved) await onSaved(saved);
@@ -73,7 +89,7 @@ export async function openPlayerForm(id, ctx, { onSaved } = {}) {
     });
     dlg.querySelector('#reset')?.addEventListener('click', async () => {
       if (!(await askConfirm('Voltar o MMR para o valor do nível selecionado?'))) return;
-      await savePlayer({ id: p.id, name: form.elements.name.value, level: form.level.value });
+      await savePlayer({ id: p.id, name: form.elements.name.value, level: form.elements.level.value });
       await resetPlayerMmr(p.id);
       closeDialog();
       toast('MMR redefinido');

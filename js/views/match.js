@@ -125,7 +125,7 @@ function renderGame(root, ctx, day, pending, matches, byId, name) {
       selected = null;
       finishing = { winner: b.dataset.win, key: pendingKey(pending) };
       ctx.rerender();
-      window.scrollTo({ top: 0 });
+      document.getElementById('app').scrollTo({ top: 0 });
     }),
   );
 
@@ -173,7 +173,7 @@ function renderFinish(root, ctx, day, pending, num, names) {
     await recordResult(day.id, w);
     toast(`Resultado do jogo nº ${num} registrado`);
     ctx.rerender();
-    window.scrollTo({ top: 0 });
+    document.getElementById('app').scrollTo({ top: 0 });
   });
 }
 
@@ -208,7 +208,7 @@ function renderBreak(root, ctx, day, matches, names) {
     if (r.error) return renderError(root, r.error);
     justStarted = true;
     ctx.rerender();
-    window.scrollTo({ top: 0 });
+    document.getElementById('app').scrollTo({ top: 0 });
   });
   root.querySelector('#undo').addEventListener('click', () => undo(day, ctx));
 }

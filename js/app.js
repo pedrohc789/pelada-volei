@@ -29,7 +29,10 @@ async function render() {
   }
 }
 
-window.addEventListener('hashchange', render);
+window.addEventListener('hashchange', () => {
+  document.getElementById('app').scrollTop = 0; // nova tela começa do topo
+  render();
+});
 render();
 
 if ('serviceWorker' in navigator) {
