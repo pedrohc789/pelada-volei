@@ -32,8 +32,17 @@ async function render() {
 
 // Altura real da tela: no iPhone em modo app (tela de início) o 100dvh do CSS fica curto
 // e sobra uma faixa vazia embaixo da barra de abas.
+// No modo app do iPhone (navigator.standalone) com a barra de status transparente, até o
+// innerHeight vem curto (falta a altura da barra de status); lá o app ocupa a tela inteira,
+// então usamos a altura da tela.
 function syncAppHeight() {
-  document.documentElement.style.setProperty('--app-h', `${window.innerHeight}px`);
+  let h = window.innerHeight;
+  if (navigator.standalone) {
+    const portrait = window.matchMedia('(orientation: portrait)').matches;
+    const full = portrait ? Math.max(screen.width, screen.height) : Math.min(screen.width, screen.height);
+    h = Math.max(h, full);
+  }
+  document.documentElement.style.setProperty('--app-h', `${h}px`);
 }
 syncAppHeight();
 window.addEventListener('resize', syncAppHeight);
