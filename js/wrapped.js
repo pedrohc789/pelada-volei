@@ -104,6 +104,6 @@ export function computeWrapped(matches) {
     inseparable,
     rival,
     upset,
-    perPlayer: Object.fromEntries(played.map((id) => [id, { games: games.get(id), wins: wins.get(id), losses: losses.get(id) }])),
+    perPlayer: Object.fromEntries(played.map((id) => [id, { games: games.get(id), wins: wins.get(id), losses: losses.get(id), streak: streaks.get(id) }])),
   };
 }
