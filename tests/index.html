@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Testes</title>
+  <style>
+    body { font-family: system-ui, sans-serif; margin: 16px; background: #fff; color: #111; }
+    li { margin: 4px 0; list-style: none; }
+    .ok { color: #157a3c; }
+    .fail { color: #b3261e; }
+    pre { white-space: pre-wrap; margin: 4px 0 0 20px; }
+  </style>
+</head>
+<body>
+  <h1>Testes — Pelada de Vôlei</h1>
+  <div id="out">Rodando…</div>
+  <script type="module">
+    import { run } from './runner.js';
+    import './elo.test.js';
+    import './balance.test.js';
+    import './rotation.test.js';
+    run(document.getElementById('out'));
+  </script>
+</body>
+</html>

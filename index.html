@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#0b6bcb">
+  <meta name="description" content="Sorteio de times equilibrados para a pelada de vôlei">
+  <title>Pelada de Vôlei</title>
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="icons/icon-192.png">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="Pelada">
+  <link rel="stylesheet" href="css/app.css">
+</head>
+<body>
+  <header class="topbar"><h1 id="title">Pelada de Vôlei</h1></header>
+  <main id="app" aria-live="polite"></main>
+  <nav class="tabbar" aria-label="Navegação">
+    <a href="#/partida" data-route="partida"><span class="ico">🏐</span>Partida</a>
+    <a href="#/dia" data-route="dia"><span class="ico">📋</span>Dia</a>
+    <a href="#/jogadores" data-route="jogadores"><span class="ico">👥</span>Jogadores</a>
+    <a href="#/historico" data-route="historico"><span class="ico">🕘</span>Histórico</a>
+    <a href="#/config" data-route="config"><span class="ico">⚙️</span>Config</a>
+  </nav>
+  <dialog id="dialog"></dialog>
+  <div id="toast" role="status"></div>
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>
