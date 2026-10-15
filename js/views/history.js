@@ -27,6 +27,7 @@ export async function render(root, ctx) {
             <div class="${m.winner === 'A' ? 'won' : ''}"><b>A</b> ${names(m.teamA)}</div>
             <div class="${m.winner === 'B' ? 'won' : ''}"><b>B</b> ${names(m.teamB)}</div>
           </li>`).join('')}</ol>` : '<p class="muted">Sem jogos.</p>'}
+        ${ms.length ? `<a class="btn block" href="#/wrapped/${d.id}">🎁 Ver wrapped do dia</a>` : ''}
         ${open && ms.length ? `<button class="btn ghost block" data-undo="${d.id}">Desfazer último resultado</button>` : ''}
       </details>`);
   }

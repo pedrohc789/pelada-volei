@@ -42,6 +42,8 @@ export async function resetPlayerMmr(id) {
 
 // ---------- Dia ----------
 
+export const getDay = (id) => db.get('days', id);
+
 export async function getOpenDay() {
   const days = (await db.getAll('days')).filter((d) => d.status === 'aberto');
   days.sort((a, b) => b.createdAt - a.createdAt);

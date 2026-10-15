@@ -51,6 +51,7 @@ export async function render(root, ctx) {
     </section>
     ${day ? `
       <a class="btn primary block" href="#/partida">Ir para a partida</a>
+      <a class="btn block" href="#/wrapped/${day.id}">🎁 Ver wrapped do dia</a>
       <button class="btn ghost danger block" id="close">Encerrar dia</button>` : `
       <button class="btn primary block" id="start">Iniciar dia</button>`}
   `;
@@ -115,7 +116,7 @@ export async function render(root, ctx) {
     if (!(await askConfirm('Encerrar o dia? A partida em andamento (sem resultado) será descartada.'))) return;
     await closeDay(day.id);
     toast('Dia encerrado');
-    ctx.rerender();
+    location.hash = `#/wrapped/${day.id}`; // fecha o dia com o resumo
   });
 }
 

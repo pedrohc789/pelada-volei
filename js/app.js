@@ -4,13 +4,14 @@ import * as day from './views/day.js';
 import * as match from './views/match.js';
 import * as historyView from './views/history.js';
 import * as config from './views/config.js';
+import * as wrapped from './views/wrapped.js';
 import { getOpenDay } from './store.js';
 import { esc } from './ui.js';
 
-const routes = { partida: match, dia: day, jogadores: players, historico: historyView, config };
+const routes = { partida: match, dia: day, jogadores: players, historico: historyView, config, wrapped };
 
 async function render() {
-  let name = location.hash.replace(/^#\//, '');
+  let [name, param] = location.hash.replace(/^#\//, '').split('/');
   if (!routes[name]) {
     name = (await getOpenDay()) ? 'partida' : 'dia';
     location.replace(`#/${name}`);
@@ -21,7 +22,7 @@ async function render() {
   document.getElementById('title').textContent = view.title;
   const root = document.getElementById('app');
   try {
-    await view.render(root, { rerender: render });
+    await view.render(root, { rerender: render, param });
   } catch (e) {
     console.error(e);
     root.innerHTML = `<div class="card error">Erro: ${esc(e.message)}</div>`;

@@ -192,3 +192,35 @@ dialog::backdrop { background: rgb(0 0 0 / .45); }
 .center { text-align: center; }
 @keyframes pop { from { transform: scale(.94); opacity: 0; } to { transform: none; opacity: 1; } }
 @media (prefers-reduced-motion: reduce) { .new-game { animation: none; } }
+
+/* Wrapped do dia (stories em tela cheia) */
+.wrapped {
+  position: fixed; inset: 0; z-index: 30; display: flex; flex-direction: column;
+  color: #fff; outline: none; transition: background .4s;
+  padding: calc(12px + env(safe-area-inset-top)) 16px calc(24px + env(safe-area-inset-bottom));
+  background: linear-gradient(160deg, #0b6bcb, #0a2a5c);
+}
+.wrapped[data-theme="1"] { background: linear-gradient(160deg, #e0662b, #7a1f3d); }
+.wrapped[data-theme="2"] { background: linear-gradient(160deg, #1db954, #0b4d3a); }
+.wrapped[data-theme="3"] { background: linear-gradient(160deg, #8e44ec, #2b0f5c); }
+.wrapped[data-theme="4"] { background: linear-gradient(160deg, #f2b705, #b3401e); }
+.wrapped[data-theme="5"] { background: linear-gradient(160deg, #e8457c, #3b1a6b); }
+.w-progress { display: flex; gap: 4px; }
+.w-progress i { flex: 1; height: 4px; border-radius: 99px; background: rgb(255 255 255 / .3); }
+.w-progress i.on { background: #fff; }
+.w-close {
+  position: absolute; top: calc(24px + env(safe-area-inset-top)); right: 12px;
+  width: 44px; height: 44px; border: 0; border-radius: 99px; background: rgb(0 0 0 / .2);
+  color: #fff; font-size: 1.2rem; cursor: pointer;
+}
+.w-stage { flex: 1; display: flex; align-items: center; justify-content: center; cursor: pointer; user-select: none; }
+.w-slide { text-align: center; max-width: 520px; animation: wIn .45s ease-out; }
+.w-emoji { font-size: 4.5rem; line-height: 1; margin-bottom: 20px; }
+.w-eyebrow { font-size: .85rem; font-weight: 700; text-transform: uppercase; letter-spacing: .12em; opacity: .85; margin-bottom: 10px; }
+.w-title { font-size: clamp(1.9rem, 9vw, 3rem); font-weight: 800; line-height: 1.1; overflow-wrap: anywhere; }
+.w-sub { font-size: 1.1rem; opacity: .9; margin-top: 14px; }
+.w-actions { display: flex; flex-direction: column; gap: 10px; margin-top: 28px; }
+.w-btn { background: #fff; color: #111; border: 0; }
+.w-btn.ghost { background: rgb(255 255 255 / .15); color: #fff; }
+@keyframes wIn { from { transform: translateY(16px) scale(.97); opacity: 0; } to { transform: none; opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { .w-slide { animation: none; } }

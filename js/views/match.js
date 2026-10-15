@@ -199,6 +199,7 @@ function renderBreak(root, ctx, day, matches, names) {
       <p>${nextText}</p>
     </section>
     <button class="btn primary block big" id="draw">Sortear jogo nº ${next}</button>
+    <a class="btn block" href="#/wrapped/${day.id}">🎁 Ver wrapped do dia até agora</a>
     <button class="btn ghost block" id="undo">Desfazer resultado do jogo nº ${last.seq}</button>
   `;
   root.querySelector('#draw').addEventListener('click', async (e) => {
