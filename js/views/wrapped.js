@@ -1,7 +1,7 @@
 // Wrapped do dia: curiosidades em slides tela cheia, estilo stories. Toque para avançar.
 import { getDay, dayMatches, listPlayers } from '../store.js';
 import { computeWrapped } from '../wrapped.js';
-import { esc, formatDate, plural, toast } from '../ui.js';
+import { esc, formatDate, plural, toast, openDialog, closeDialog } from '../ui.js';
 
 export const title = 'Wrapped do dia';
 
@@ -146,17 +146,37 @@ export async function render(root, ctx) {
     else location.hash = '#/historico';
   };
 
-  async function share(e) {
+  // Janela com o texto e opções: compartilhar nativo (se houver), copiar e WhatsApp.
+  // Nem todo navegador tem navigator.share, e a área de transferência pode ser bloqueada.
+  function share(e) {
     e.stopPropagation();
-    try {
-      if (navigator.share) await navigator.share({ text: shareText });
-      else {
-        await navigator.clipboard.writeText(shareText);
-        toast('Resumo copiado — cole no grupo!');
-      }
-    } catch (err) {
-      if (err.name !== 'AbortError') toast('Não foi possível compartilhar.');
-    }
+    openDialog(`
+      <div class="form">
+        <h2>Compartilhar resumo</h2>
+        <textarea class="share-text" readonly rows="10">${esc(shareText)}</textarea>
+        ${navigator.share ? '<button type="button" class="btn primary" id="sh-native">Compartilhar…</button>' : ''}
+        <button type="button" class="btn ${navigator.share ? '' : 'primary'}" id="sh-copy">Copiar texto</button>
+        <a class="btn" id="sh-wa" href="https://wa.me/?text=${encodeURIComponent(shareText)}" target="_blank" rel="noopener">Enviar no WhatsApp</a>
+        <button type="button" class="btn ghost" data-close>Fechar</button>
+      </div>`, (dlg) => {
+      const ta = dlg.querySelector('textarea');
+      dlg.querySelector('#sh-native')?.addEventListener('click', async () => {
+        try {
+          await navigator.share({ text: shareText });
+          closeDialog();
+        } catch (err) {
+          if (err.name !== 'AbortError') toast('Não deu para abrir o compartilhamento; use Copiar texto.');
+        }
+      });
+      dlg.querySelector('#sh-copy').addEventListener('click', async (ev) => {
+        const ok = await copyText(shareText, ta);
+        ev.target.textContent = ok ? 'Copiado ✓ — cole no grupo' : 'Selecione o texto acima e copie';
+        if (!ok) {
+          ta.focus();
+          ta.select();
+        }
+      });
+    });
   }
 
   root.querySelector('.w-close').addEventListener('click', (e) => {
@@ -175,4 +195,20 @@ export async function render(root, ctx) {
   });
   show();
   wrap.focus();
+}
+
+// Tenta a API de área de transferência e, se bloqueada, o método antigo com o texto selecionado.
+async function copyText(text, textarea) {
+  try {
+    await navigator.clipboard.writeText(text);
+    return true;
+  } catch {
+    textarea.focus();
+    textarea.select();
+    try {
+      return document.execCommand('copy');
+    } catch {
+      return false;
+    }
+  }
 }
