@@ -1,6 +1,6 @@
 // Service worker: guarda os arquivos do app para funcionar offline.
 // Ao mudar qualquer arquivo, incremente VERSION para os celulares baixarem a versão nova.
-const VERSION = 'v10';
+const VERSION = 'v11';
 const CACHE = `pelada-${VERSION}`;
 const FILES = [
   './',

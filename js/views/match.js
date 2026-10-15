@@ -109,7 +109,8 @@ function renderGame(root, ctx, day, pending, matches, byId, name, kick) {
       <button class="btn" id="reroll">↻ Sortear de novo</button>
       <button class="btn" id="full">Sorteio completo</button>
     </div>
-    ${matches.length ? '<button class="btn ghost block" id="undo" style="margin-top:8px">Desfazer resultado do jogo anterior</button>' : ''}
+    <button class="btn block" id="close-day" style="margin-top:10px">🏁 Encerrar o dia</button>
+    ${matches.length ? '<button class="btn ghost block" id="undo">Desfazer resultado do jogo anterior</button>' : ''}
   `;
   justStarted = false;
 
@@ -154,6 +155,9 @@ function renderGame(root, ctx, day, pending, matches, byId, name, kick) {
     ctx.rerender();
   });
   root.querySelector('#undo')?.addEventListener('click', () => undo(day, ctx));
+  root.querySelector('#close-day').addEventListener('click', () =>
+    endDay(day, ctx, `Encerrar o dia com ${plural(matches.length, 'jogo', 'jogos')}? O jogo ${pad2(num)}, em andamento, será descartado (sem resultado).`),
+  );
 }
 
 // ---------- 2. Fim de jogo: confirmar resultado ----------
@@ -226,12 +230,19 @@ function renderBreak(root, ctx, day, matches, names, kick) {
     document.getElementById('app').scrollTo({ top: 0 });
   });
   root.querySelector('#undo').addEventListener('click', () => undo(day, ctx));
-  root.querySelector('#close-day').addEventListener('click', async () => {
-    if (!(await askConfirm(`Encerrar o dia com ${plural(matches.length, 'jogo', 'jogos')}?`, 'Encerrar dia'))) return;
-    await closeDay(day.id);
-    ctx.rerender();
-    document.getElementById('app').scrollTo({ top: 0 });
-  });
+  root.querySelector('#close-day').addEventListener('click', () =>
+    endDay(day, ctx, `Encerrar o dia com ${plural(matches.length, 'jogo', 'jogos')}?`),
+  );
+}
+
+// Encerra o dia (a partida sem resultado, se houver, é descartada) e mostra o fechamento com o wrapped.
+async function endDay(day, ctx, message) {
+  if (!(await askConfirm(message, 'Encerrar dia'))) return;
+  selected = null;
+  finishing = null;
+  await closeDay(day.id);
+  ctx.rerender();
+  document.getElementById('app').scrollTo({ top: 0 });
 }
 
 // ---------- 4. Sem dia aberto: fechamento do último dia + wrapped ----------
