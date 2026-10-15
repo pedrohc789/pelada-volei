@@ -108,11 +108,8 @@ function renderGame(root, ctx, day, pending, matches, byId, name, kick) {
     <p class="hint">Toque em dois jogadores para trocá-los de lugar.</p>
     ${restingSection(day, num, byId)}
     <button class="btn block" id="rest" style="margin-top:14px">☕ Descansar</button>
-    <div class="tools" style="margin-top:0">
-      <button class="btn" id="reroll">↻ Sortear de novo</button>
-      <button class="btn" id="full">Sorteio completo</button>
-    </div>
-    <button class="btn block" id="close-day" style="margin-top:10px">🏁 Encerrar o dia</button>
+    <button class="btn block" id="reroll">↻ Sortear de novo</button>
+    <button class="btn block" id="close-day">🏁 Encerrar o dia</button>
     ${matches.length ? '<button class="btn ghost block" id="undo">Desfazer resultado do jogo anterior</button>' : ''}
   `;
   justStarted = false;
@@ -148,13 +145,8 @@ function renderGame(root, ctx, day, pending, matches, byId, name, kick) {
 
   root.querySelector('#reroll').addEventListener('click', async () => {
     selected = null;
-    await proposeMatch(day.id, { reroll: true, forceDraw: pending.reason === 'sorteio-manual' });
-    ctx.rerender();
-  });
-  root.querySelector('#full').addEventListener('click', async () => {
-    if (pending.streakA > 1 && !(await askConfirm('O vencedor sairá da quadra antes do limite. Fazer sorteio completo?'))) return;
-    selected = null;
-    await proposeMatch(day.id, { reroll: true, forceDraw: true });
+    // Sempre segue o rodízio: com vencedor em quadra, só o desafiante é sorteado de novo.
+    await proposeMatch(day.id, { reroll: true });
     ctx.rerender();
   });
   root.querySelector('#undo')?.addEventListener('click', () => undo(day, ctx));
