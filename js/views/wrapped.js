@@ -29,10 +29,6 @@ export function buildSlides(w, day, nameOf) {
     sub: `${plural(w.totalPlayers, 'pessoa entrou', 'pessoas entraram')} em quadra`,
     share: `📊 ${plural(w.totalGames, 'jogo', 'jogos')} com ${plural(w.totalPlayers, 'pessoa', 'pessoas')}`,
   });
-  if (w.mostGames) slides.push({
-    emoji: '🔋', eyebrow: 'Pulmão de aço', title: names(w.mostGames.ids), sub: `${plural(w.mostGames.value, 'partida jogada', 'partidas jogadas')}`,
-    share: `🔋 Pulmão de aço: ${names(w.mostGames.ids)} (${w.mostGames.value} jogos)`,
-  });
   if (w.mostWins) slides.push({
     emoji: '🏆', eyebrow: 'Quem mais venceu', title: names(w.mostWins.ids), sub: plural(w.mostWins.value, 'vitória', 'vitórias'),
     share: `🏆 Mais vitórias: ${names(w.mostWins.ids)} (${w.mostWins.value})`,
