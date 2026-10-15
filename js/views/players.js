@@ -1,7 +1,7 @@
 // Cadastro do grupo. Listas mostram só nomes; o MMR aparece apenas na ficha do jogador.
 import { listPlayers, getPlayer, savePlayer, setPlayerActive, resetPlayerMmr } from '../store.js';
 import { LEVELS } from '../elo.js';
-import { esc, openDialog, closeDialog, toast, plural, askConfirm } from '../ui.js';
+import { esc, openDialog, closeDialog, toast, plural, askConfirm, initials } from '../ui.js';
 
 export const title = 'Jogadores';
 
@@ -9,7 +9,7 @@ export async function render(root, ctx) {
   const all = await listPlayers();
   const active = all.filter((p) => p.active);
   const inactive = all.filter((p) => !p.active);
-  const item = (p) => `<li><button class="row" data-id="${p.id}">${esc(p.name)}<span class="chev">›</span></button></li>`;
+  const item = (p) => `<li><button class="row" data-id="${p.id}"><span class="av">${esc(initials(p.name))}</span><span class="grow">${esc(p.name)}</span><span class="chev">›</span></button></li>`;
 
   root.innerHTML = `
     <button class="btn primary block" id="add">+ Novo jogador</button>

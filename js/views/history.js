@@ -31,8 +31,8 @@ export async function render(root, ctx) {
         ${ms.length ? `<ol class="matches">${ms.slice().reverse().map((m) => `
           <li>
             <div class="mnum">Jogo ${m.seq}</div>
-            <div class="${m.winner === 'A' ? 'won' : ''}"><b>A</b> ${names(m.teamA)}</div>
-            <div class="${m.winner === 'B' ? 'won' : ''}"><b>B</b> ${names(m.teamB)}</div>
+            <div class="ta ${m.winner === 'A' ? 'won' : ''}"><b>A</b> ${names(m.teamA)}</div>
+            <div class="tb ${m.winner === 'B' ? 'won' : ''}"><b>B</b> ${names(m.teamB)}</div>
           </li>`).join('')}</ol>` : '<p class="muted">Sem jogos.</p>'}
         ${open && ms.length ? `<button class="btn ghost block" data-undo="${d.id}">Desfazer último resultado</button>` : ''}
       </details>`);

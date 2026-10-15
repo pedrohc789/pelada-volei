@@ -20,6 +20,7 @@ export function openDialog(html, onReady) {
   dlg.querySelectorAll('[data-close]').forEach((b) => b.addEventListener('click', () => dlg.close()));
   onReady?.(dlg);
   dlg.showModal();
+  dlg.scrollTop = 0; // o foco automático pode rolar a janela até o último botão
   return dlg;
 }
 
@@ -68,3 +69,21 @@ export function formatDate(iso) {
 export function plural(n, one, many) {
   return `${n} ${n === 1 ? one : many}`;
 }
+
+// "QUI · 15 OUT"
+export function shortDate(iso) {
+  const [y, m, d] = iso.split('-').map(Number);
+  const dt = new Date(y, m - 1, d);
+  const wd = ['DOM', 'SEG', 'TER', 'QUA', 'QUI', 'SEX', 'SÁB'][dt.getDay()];
+  const mo = ['JAN', 'FEV', 'MAR', 'ABR', 'MAI', 'JUN', 'JUL', 'AGO', 'SET', 'OUT', 'NOV', 'DEZ'][m - 1];
+  return `${wd} · ${d} ${mo}`;
+}
+
+// Iniciais para o avatar: "Ana Paula" → "AP", "Bruno" → "BR".
+export function initials(name) {
+  const parts = String(name || '?').trim().split(/\s+/).filter(Boolean);
+  if (parts.length > 1) return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+  return (parts[0] || '?').slice(0, 2).toUpperCase();
+}
+
+export const pad2 = (n) => String(n).padStart(2, '0');

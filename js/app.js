@@ -18,6 +18,7 @@ async function render() {
     return;
   }
   document.querySelectorAll('.tabbar a').forEach((a) => a.classList.toggle('active', a.dataset.route === name));
+  document.body.classList.toggle('own-header', name === 'partida'); // a Partida desenha o próprio cabeçalho
   const view = routes[name];
   document.getElementById('title').textContent = view.title;
   const root = document.getElementById('app');

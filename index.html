@@ -3,13 +3,16 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content">
-  <meta name="theme-color" content="#0b6bcb">
+  <meta name="theme-color" content="#0b0f14">
   <meta name="description" content="Sorteio de times equilibrados para a pelada de vôlei">
   <title>Pelada de Vôlei</title>
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="icon" href="icons/icon.svg" type="image/svg+xml">
   <link rel="apple-touch-icon" href="icons/icon-192.png">
   <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <link rel="preload" href="fonts/oswald.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="fonts/inter.woff2" as="font" type="font/woff2" crossorigin>
   <meta name="apple-mobile-web-app-title" content="Pelada">
   <link rel="stylesheet" href="css/app.css">
 </head>
@@ -17,11 +20,11 @@
   <header class="topbar"><h1 id="title">Pelada de Vôlei</h1></header>
   <main id="app" aria-live="polite"></main>
   <nav class="tabbar" aria-label="Navegação">
-    <a href="#/partida" data-route="partida"><span class="ico">🏐</span>Partida</a>
-    <a href="#/dia" data-route="dia"><span class="ico">📋</span>Dia</a>
-    <a href="#/jogadores" data-route="jogadores"><span class="ico">👥</span>Jogadores</a>
-    <a href="#/historico" data-route="historico"><span class="ico">🕘</span>Histórico</a>
-    <a href="#/config" data-route="config"><span class="ico">⚙️</span>Config</a>
+    <a href="#/partida" data-route="partida"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 3c-2 4-2 8 0 9s6 0 8-3M12 12c-3 1-6 4-6 8M12 12c3 1 5 3 6 7"/></svg><span>Partida</span></a>
+    <a href="#/dia" data-route="dia"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="4" y="5" width="16" height="16" rx="2"/><path d="M8 3v4M16 3v4M4 10h16"/></svg><span>Dia</span></a>
+    <a href="#/jogadores" data-route="jogadores"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c.8-3.5 3.4-5.5 6.5-5.5s5.7 2 6.5 5.5"/><path d="M16 4.5a3.5 3.5 0 0 1 0 7M18 14.8c1.9.8 3 2.6 3.5 5.2"/></svg><span>Jogadores</span></a>
+    <a href="#/historico" data-route="historico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg><span>Histórico</span></a>
+    <a href="#/config" data-route="config"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/></svg><span>Ajustes</span></a>
   </nav>
   <dialog id="dialog"></dialog>
   <dialog id="confirm"></dialog>

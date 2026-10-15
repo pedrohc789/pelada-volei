@@ -6,7 +6,7 @@
 // Não mostra MMR individual — só um indicador geral de equilíbrio.
 import { getOpenDay, listDays, closeDay, listPlayers, dayMatches, proposeMatch, swapPlayers, recordResult, undoLast, pendingChance } from '../store.js';
 import { dayStats, stayingTeam, MAX_STREAK } from '../rotation.js';
-import { esc, toast, plural, askConfirm, formatDate } from '../ui.js';
+import { esc, toast, plural, askConfirm, formatDate, shortDate, initials, pad2 } from '../ui.js';
 
 export const title = 'Partida';
 
@@ -25,6 +25,20 @@ let justStarted = false; // mostra o aviso de "novo jogo" uma vez, logo após o 
 
 const pendingKey = (p) => `${p.teamA.join(',')}|${p.teamB.join(',')}`;
 
+// Cabeçalho próprio da tela: linha pequena + título grande (o número em destaque).
+function head(kicker, title, accent = '', badge = '') {
+  return `
+    <div class="match-head">
+      <div><span class="kicker">${kicker}</span><div class="big">${title}${accent ? ` <span>${accent}</span>` : ''}</div></div>
+      ${badge ? `<span class="badge volt">${badge}</span>` : ''}
+    </div>`;
+}
+
+const BADGES = {
+  inicio: 'Sorteio', sorteio: 'Sorteio', 'sorteio-manual': 'Sorteio', 'dois-saem': 'Sorteio novo',
+  'vencedor-fica': 'Vencedor fica', 'vencedor-fica-substituicao': 'Vencedor fica',
+};
+
 export async function render(root, ctx) {
   const day = await getOpenDay();
   if (!day) return renderClosed(root);
@@ -32,9 +46,10 @@ export async function render(root, ctx) {
   const byId = new Map(players.map((p) => [p.id, p]));
   const name = (id) => esc(byId.get(id)?.name || '?');
   const names = (ids) => ids.map(name).join(', ');
+  const kick = `${shortDate(day.date)} · ${plural(day.presentIds.length, 'presente', 'presentes')}`;
 
   let pending = day.pending;
-  if (!pending && matches.length) return renderBreak(root, ctx, day, matches, names);
+  if (!pending && matches.length) return renderBreak(root, ctx, day, matches, names, kick);
   if (!pending) {
     const r = await proposeMatch(day.id);
     if (r.error) return renderError(root, r.error);
@@ -43,19 +58,19 @@ export async function render(root, ctx) {
   }
 
   if (finishing && finishing.key === pendingKey(pending)) {
-    return renderFinish(root, ctx, day, pending, matches.length + 1, names);
+    return renderFinish(root, ctx, day, pending, matches.length + 1, names, kick);
   }
   finishing = null;
-  renderGame(root, ctx, day, pending, matches, byId, name);
+  renderGame(root, ctx, day, pending, matches, byId, name, kick);
 }
 
 function renderError(root, msg) {
-  root.innerHTML = `<section class="card error"><p>${esc(msg)}</p><a class="btn block" href="#/dia">Ajustar presença</a></section>`;
+  root.innerHTML = `${head('Partida', 'Ops')}<section class="card error"><p>${esc(msg)}</p><a class="btn block" href="#/dia">Ajustar presença</a></section>`;
 }
 
 // ---------- 1. Jogo em andamento ----------
 
-function renderGame(root, ctx, day, pending, matches, byId, name) {
+function renderGame(root, ctx, day, pending, matches, byId, name, kick) {
   const num = matches.length + 1;
   const stats = dayStats(matches);
   const games = (id) => stats[id]?.games || 0;
@@ -63,38 +78,38 @@ function renderGame(root, ctx, day, pending, matches, byId, name) {
   const bench = day.presentIds.filter((id) => !onCourt.has(id)).sort((a, b) => games(a) - games(b));
   const chanceA = Math.round(pendingChance(pending, byId) * 100);
 
-  const chip = (id) => `<button class="chip ${selected === id ? 'sel' : ''}" data-pid="${id}">${name(id)}<small>${games(id)}</small></button>`;
-  const streakLabel = (s) => (s > 1 ? `<span class="badge warn">${s}º jogo seguido</span>` : '');
-  const team = (label, ids, streak, key) => `
-    <section class="card team team-${key}">
-      <h2>${label} ${streakLabel(streak)}</h2>
-      <div class="chips">${ids.map(chip).join('')}</div>
-      <button class="btn primary block" data-win="${key}">${label} venceu</button>
-    </section>`;
+  // Jogador como botão (toque em dois para trocar de lugar); no banco mostra partidas hoje.
+  const pl = (id, team) => `
+    <button class="pl ${selected === id ? 'sel' : ''}" data-pid="${id}">
+      <span class="av ${team}">${esc(initials(byId.get(id)?.name))}</span><span class="nm">${name(id)}</span>${team ? '' : `<span class="cnt">${games(id)}</span>`}
+    </button>`;
+  const stays = pending.reason.startsWith('vencedor');
+  const streakText = (n, other) => (n > 1 ? `${n}º jogo seguido` : other);
 
   root.innerHTML = `
-    ${justStarted ? `<section class="card new-game"><span class="eyebrow">Novo jogo</span><strong>🏐 Começou o jogo nº ${num}</strong></section>` : ''}
-    <section class="card info">
-      <p><strong>Jogo nº ${num}</strong> · ${esc(REASONS[pending.reason] || '')}</p>
-      ${pending.warning ? `<p class="warn-text">${esc(pending.warning)}</p>` : ''}
-      <div class="balance" title="Chance estimada de vitória">
-        <span>Equilíbrio</span>
-        <div class="bar"><i style="width:${chanceA}%"></i></div>
-        <span>${chanceA}% × ${100 - chanceA}%</span>
+    ${justStarted ? `<section class="card new-game">🏐 Começou o jogo ${pad2(num)}</section>` : ''}
+    ${head(kick, 'Jogo', pad2(num), BADGES[pending.reason])}
+    ${pending.warning ? `<p class="warn-text">${esc(pending.warning)}</p>` : ''}
+    <div class="court">
+      <div class="half a">
+        <div class="half-head"><span class="team-label">Time A</span><span class="streak-label">${streakText(pending.streakA, '')}</span></div>
+        <div class="pgrid">${pending.teamA.map((id) => pl(id, 'a')).join('')}</div>
       </div>
-    </section>
-    ${team('Time A', pending.teamA, pending.streakA, 'A')}
-    ${team('Time B', pending.teamB, pending.streakB, 'B')}
-    <section class="card">
-      <h2>De fora <small>${plural(bench.length, 'jogador', 'jogadores')}</small></h2>
-      ${bench.length ? `<div class="chips">${bench.map(chip).join('')}</div>` : '<p class="muted">Ninguém de fora.</p>'}
-      <p class="muted small">O número em cada nome é quantas partidas jogou hoje. Toque em dois nomes para trocá-los de lugar.</p>
-    </section>
-    <div class="row-actions">
-      <button class="btn" id="reroll">Sortear de novo</button>
-      <button class="btn ghost" id="full">Sorteio completo</button>
+      <div class="net"><div class="bal" title="Chance estimada de vitória"><span class="ca">${chanceA}%</span><span class="x">equilíbrio</span><span class="cb">${100 - chanceA}%</span></div></div>
+      <div class="half b">
+        <div class="pgrid">${pending.teamB.map((id) => pl(id, 'b')).join('')}</div>
+        <div class="half-head"><span class="team-label">Time B</span><span class="streak-label">${streakText(pending.streakB, stays ? 'Desafiante' : '')}</span></div>
+      </div>
     </div>
-    ${matches.length ? '<button class="btn ghost block" id="undo">Desfazer resultado do jogo anterior</button>' : ''}
+    <div class="win-row"><button class="wa" data-win="A">A venceu</button><button class="wb" data-win="B">B venceu</button></div>
+    <div class="sec"><h3>No banco</h3><small>partidas hoje</small></div>
+    ${bench.length ? `<div class="bench">${bench.map((id) => pl(id, '')).join('')}</div>` : '<p class="muted small">Ninguém no banco.</p>'}
+    <p class="hint">Toque em dois jogadores para trocá-los de lugar.</p>
+    <div class="tools">
+      <button class="btn" id="reroll">↻ Sortear de novo</button>
+      <button class="btn" id="full">Sorteio completo</button>
+    </div>
+    ${matches.length ? '<button class="btn ghost block" id="undo" style="margin-top:8px">Desfazer resultado do jogo anterior</button>' : ''}
   `;
   justStarted = false;
 
@@ -143,14 +158,15 @@ function renderGame(root, ctx, day, pending, matches, byId, name) {
 
 // ---------- 2. Fim de jogo: confirmar resultado ----------
 
-function renderFinish(root, ctx, day, pending, num, names) {
+function renderFinish(root, ctx, day, pending, num, names, kick) {
   const w = finishing.winner;
   const l = w === 'A' ? 'B' : 'A';
   const ids = { A: pending.teamA, B: pending.teamB };
   root.innerHTML = `
-    <section class="card result-hero team-${w}">
-      <span class="eyebrow">Fim do jogo nº ${num}</span>
-      <h2>🏆 Vitória do Time ${w}</h2>
+    ${head(kick, 'Fim do jogo', pad2(num))}
+    <section class="card hero ${w.toLowerCase()}">
+      <span class="eyebrow">Vitória</span>
+      <h2>🏆 Time ${w}</h2>
       <p>${names(ids[w])}</p>
     </section>
     <section class="card loser">
@@ -177,7 +193,7 @@ function renderFinish(root, ctx, day, pending, num, names) {
 
 // ---------- 3. Intervalo: resultado registrado, próximo jogo sob demanda ----------
 
-function renderBreak(root, ctx, day, matches, names) {
+function renderBreak(root, ctx, day, matches, names, kick) {
   const last = matches[matches.length - 1];
   const next = last.seq + 1;
   const winIds = last.winner === 'A' ? last.teamA : last.teamB;
@@ -187,18 +203,19 @@ function renderBreak(root, ctx, day, matches, names) {
     : `<b>O time vencedor fica em quadra</b> para o ${stay.streak + 1}º jogo seguido. O desafiante sai de quem jogou menos.`;
 
   root.innerHTML = `
-    <section class="card done">
-      <span class="eyebrow">✓ Jogo nº ${last.seq} registrado</span>
+    ${head(kick, 'Intervalo')}
+    <section class="card hero ${last.winner.toLowerCase()}">
+      <span class="eyebrow">✓ Jogo ${pad2(last.seq)} registrado</span>
       <h2>Vitória do Time ${last.winner}</h2>
       <p>${names(winIds)}</p>
     </section>
     <section class="card">
-      <h2>Próximo: jogo nº ${next}</h2>
-      <p>${nextText}</p>
+      <span class="eyebrow">Próximo · jogo ${pad2(next)}</span>
+      <p style="margin:0">${nextText}</p>
     </section>
-    <button class="btn primary block big" id="draw">Sortear jogo nº ${next}</button>
+    <button class="btn primary block big" id="draw">Sortear jogo ${pad2(next)}</button>
     <button class="btn block" id="close-day">🏁 Encerrar o dia</button>
-    <button class="btn ghost block" id="undo">Desfazer resultado do jogo nº ${last.seq}</button>
+    <button class="btn ghost block" id="undo">Desfazer resultado do jogo ${pad2(last.seq)}</button>
   `;
   root.querySelector('#draw').addEventListener('click', async (e) => {
     e.target.disabled = true;
@@ -223,11 +240,12 @@ async function renderClosed(root) {
   const last = (await listDays())[0];
   const games = last ? (await dayMatches(last.id)).length : 0;
   if (!last || !games) {
-    root.innerHTML = `<section class="card"><h2>Nenhum dia aberto</h2><p class="muted">Marque quem veio para começar.</p><a class="btn primary block" href="#/dia">Iniciar dia</a></section>`;
+    root.innerHTML = `${head('Pelada de vôlei', 'Bora', 'jogar?')}<section class="card"><h2>Nenhum dia aberto</h2><p class="muted" style="margin:0 0 12px">Marque quem veio para começar.</p><a class="btn primary block big" href="#/dia">Iniciar dia</a></section>`;
     return;
   }
   root.innerHTML = `
-    <section class="card done">
+    ${head(shortDate(last.date), 'Fim de', 'dia')}
+    <section class="card hero volt">
       <span class="eyebrow">🏁 Dia encerrado</span>
       <h2>Pelada de ${formatDate(last.date)}</h2>
       <p>${plural(games, 'jogo', 'jogos')} · ${plural(last.presentIds.length, 'presente', 'presentes')}</p>

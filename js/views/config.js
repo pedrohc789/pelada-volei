@@ -3,7 +3,7 @@ import { exportAll, importAll, wipeAll } from '../store.js';
 import { MAX_STREAK } from '../rotation.js';
 import { toast, todayIso, askConfirm } from '../ui.js';
 
-export const title = 'Configurações';
+export const title = 'Ajustes';
 
 export async function render(root, ctx) {
   root.innerHTML = `
