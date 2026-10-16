@@ -49,13 +49,15 @@ export async function openPlayerForm(id, ctx, { onSaved } = {}) {
         </div>
         <p class="muted small">${p.games ? 'O MMR é ajustado automaticamente pelos resultados. Visível só aqui.' : 'Sem partidas: o nível define o MMR inicial.'}</p>` : '<p class="muted small">O nível vira o MMR inicial; depois ele se ajusta pelos resultados.</p>'}
       <div class="actions">
-        <button type="button" class="btn" data-close>Cancelar</button>
+        ${p
+          ? `<button type="button" class="btn danger" id="toggle">${p.active ? 'Desativar' : 'Reativar'}</button>`
+          : '<button type="button" class="btn" data-close>Cancelar</button>'}
         <button type="submit" class="btn primary">Salvar</button>
       </div>
       ${p ? `
         <div class="actions secondary">
           ${p.games ? '<button type="button" class="btn ghost" id="reset">Redefinir MMR pelo nível</button>' : ''}
-          <button type="button" class="btn ghost danger" id="toggle">${p.active ? 'Desativar' : 'Reativar'}</button>
+          <button type="button" class="btn ghost" data-close>Cancelar</button>
         </div>` : ''}
     </form>`, (dlg) => {
     const form = dlg.querySelector('#pform');
