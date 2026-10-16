@@ -7,6 +7,7 @@ import * as config from './views/config.js';
 import * as wrapped from './views/wrapped.js';
 import * as entrar from './views/entrar.js';
 import * as sync from './sync.js';
+import { setupPullToRefresh } from './pull.js';
 import { getOpenDay } from './store.js';
 import { esc, toast } from './ui.js';
 
@@ -84,6 +85,13 @@ sync.onStatus((s) => {
 
 render();
 sync.start(render).then(render);
+
+// Puxar a tela para baixo (no topo) força a sincronização com o grupo.
+setupPullToRefresh(document.getElementById('app'), async () => {
+  const st = await sync.forceSync();
+  await render();
+  toast(st === 'ok' ? 'Sincronizado ✓' : st === 'local' ? 'Atualizado (sem grupo, os dados ficam só neste aparelho)' : 'Sem conexão — mostrando os últimos dados salvos');
+});
 
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('sw.js').catch((e) => console.warn('SW não registrado', e));

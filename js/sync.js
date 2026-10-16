@@ -143,15 +143,17 @@ async function connect(g) {
   });
   if (!navigator.onLine) {
     setStatus('offline');
-    return;
+    return false;
   }
   setStatus('syncing');
   try {
     await pullAll(g.id);
     await subscribe(g.id);
+    return true;
   } catch (e) {
     console.warn('Sincronização indisponível', e);
     setStatus('offline');
+    return false;
   }
 }
 
@@ -212,4 +214,12 @@ export async function leaveGroup() {
 export async function refresh() {
   const g = groupInfo();
   if (g && navigator.onLine) await pullAll(g.id);
+}
+
+// Sincronização forçada (gesto de puxar a tela): baixa tudo de novo e refaz o tempo real.
+// Retorna o status final: 'local' (sem grupo), 'ok' ou 'offline'.
+export async function forceSync() {
+  const g = groupInfo();
+  if (!g || !isConfigured()) return 'local';
+  return (await connect(g)) ? 'ok' : 'offline';
 }
