@@ -186,10 +186,13 @@ export async function recordResult(dayId, winner) {
   const teamB = pend.teamB.map((id) => players.get(id));
   const deltas = computeDeltas(teamA, teamB, winner);
   const matches = await dayMatches(dayId);
+  const seq = matches.length ? matches[matches.length - 1].seq + 1 : 1;
   const match = {
-    id: db.newId(),
+    // ID fixo por dia+jogo: se dois organizadores registram o mesmo jogo ao mesmo tempo,
+    // o servidor aceita só o primeiro (o segundo recebe conflito).
+    id: `${dayId}:${seq}`,
     dayId,
-    seq: matches.length ? matches[matches.length - 1].seq + 1 : 1,
+    seq,
     teamA: pend.teamA,
     teamB: pend.teamB,
     streakA: pend.streakA,

@@ -7,6 +7,7 @@
 import { getOpenDay, listDays, closeDay, listPlayers, dayMatches, proposeMatch, swapPlayers, recordResult, undoLast, pendingChance, restPlayer, endRest } from '../store.js';
 import { dayStats, stayingTeam, MAX_STREAK, activeRestingIds } from '../rotation.js';
 import { openStats } from './history.js';
+import * as sync from '../sync.js';
 import { esc, toast, plural, askConfirm, formatDate, shortDate, initials, pad2, openDialog, closeDialog } from '../ui.js';
 
 export const title = 'Partida';
@@ -52,7 +53,19 @@ export async function render(root, ctx) {
   let pending = day.pending;
   if (!pending && matches.length) return renderBreak(root, ctx, day, matches, names, kick, byId);
   if (!pending) {
-    const r = await proposeMatch(day.id);
+    let r;
+    try {
+      r = await proposeMatch(day.id);
+    } catch (e) {
+      // No grupo, vários aparelhos com a Partida aberta tentam sortear ao mesmo tempo: só um
+      // consegue. Os outros só esperam o jogo dele chegar (o tempo real redesenha a tela).
+      if (e.name === 'ConflictError') {
+        await sync.refresh().catch(() => {});
+        return ctx.rerender();
+      }
+      if (e.name === 'OfflineError') return renderError(root, 'Sem conexão: o jogo será sorteado quando a internet voltar.');
+      throw e;
+    }
     if (r.error) return renderError(root, r.error);
     pending = r.pending;
     justStarted = true;

@@ -5,10 +5,12 @@ import * as match from './views/match.js';
 import * as historyView from './views/history.js';
 import * as config from './views/config.js';
 import * as wrapped from './views/wrapped.js';
+import * as entrar from './views/entrar.js';
+import * as sync from './sync.js';
 import { getOpenDay } from './store.js';
-import { esc } from './ui.js';
+import { esc, toast } from './ui.js';
 
-const routes = { partida: match, dia: day, jogadores: players, historico: historyView, config, wrapped };
+const routes = { partida: match, dia: day, jogadores: players, historico: historyView, config, wrapped, entrar };
 
 async function render() {
   let [name, param] = location.hash.replace(/^#\//, '').split('/');
@@ -52,7 +54,36 @@ window.addEventListener('hashchange', () => {
   document.getElementById('app').scrollTop = 0; // nova tela começa do topo
   render();
 });
+
+// Conflitos (outro organizador mudou antes) e falta de internet no modo grupo chegam aqui
+// a partir de qualquer botão: avisa, ressincroniza e redesenha a tela.
+window.addEventListener('unhandledrejection', async (e) => {
+  const err = e.reason;
+  if (!err || (err.name !== 'ConflictError' && err.name !== 'OfflineError')) return;
+  e.preventDefault();
+  toast(err.message);
+  if (err.name === 'ConflictError') {
+    try {
+      await sync.refresh();
+    } catch {
+      /* segue com o espelho atual */
+    }
+  }
+  render();
+});
+
+// Indicador de sincronização (só no modo grupo).
+const LABELS = { syncing: '🔄 Sincronizando…', offline: '⚪ Offline — só leitura' };
+sync.onStatus((s) => {
+  const el = document.getElementById('sync');
+  el.textContent = LABELS[s] || '';
+  el.hidden = !LABELS[s];
+  document.querySelector('.tabbar a[data-route="config"]')?.classList.toggle('synced', s === 'ok');
+  if (location.hash.startsWith('#/config')) render(); // a tela de Ajustes mostra o status do grupo
+});
+
 render();
+sync.start(render).then(render);
 
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('sw.js').catch((e) => console.warn('SW não registrado', e));

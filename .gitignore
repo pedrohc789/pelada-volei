@@ -1,0 +1,6 @@
+
+# Arquivos pessoais/segredos nunca vão para o repositório
+senha*.txt
+*.secret
+.env
+mockups/

@@ -345,3 +345,18 @@ dialog::backdrop { background: rgb(0 0 0 / .6); }
 .menu-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 14px 0 10px; }
 .menu-grid .btn { min-height: 52px; padding: 10px 8px; font-size: .9rem; }
 .menu-grid .btn:last-child:nth-child(odd) { grid-column: 1 / -1; }
+
+/* ---------- Grupo sincronizado ---------- */
+#sync {
+  position: fixed; left: 50%; transform: translateX(-50%); z-index: 40;
+  bottom: calc(78px + env(safe-area-inset-bottom));
+  background: var(--panel-2); color: var(--text); border: 1px solid var(--line);
+  padding: 6px 12px; border-radius: 99px; font-size: .75rem; font-weight: 600; white-space: nowrap;
+}
+#sync[hidden] { display: none; }
+.tabbar a.synced { position: relative; }
+.tabbar a.synced::after {
+  content: ""; position: absolute; top: 0; left: calc(50% + 9px);
+  width: 8px; height: 8px; border-radius: 50%; background: #2bd66b; box-shadow: 0 0 0 2px var(--bg);
+}
+.group-code { font-family: ui-monospace, monospace; font-size: .85rem; word-break: break-all; color: var(--muted); }

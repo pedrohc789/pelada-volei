@@ -25,6 +25,19 @@ Publicado em **https://pedrohc789.github.io/pelada-volei/** (GitHub Pages, branc
 Para atualizar: commit + `git push`; o Pages republica em ~1 minuto. Incremente `VERSION`
 em `sw.js` a cada versão para os celulares trocarem o cache.
 
+## Grupo sincronizado (Supabase)
+
+Em **Ajustes → Grupo**, um aparelho cria o grupo com os dados dele e manda o link
+(`…/#/entrar/<código>`). Todos que entram pelo link veem e registram os jogos, sincronizado na hora.
+
+- Login anônimo do Supabase (sem cadastro); só membros leem ou gravam (RLS + funções em
+  `supabase/schema.sql`).
+- Cada documento tem `version`; gravações vão por `apply_ops` (tudo ou nada). Se dois organizadores
+  mudam a mesma coisa, o segundo recebe "Outro organizador alterou isso agora" e a tela atualiza.
+  O resultado de um jogo tem ID fixo (`<dia>:<jogo>`), então nunca é registrado duas vezes.
+- Sem internet, o grupo fica só leitura (o espelho local continua disponível).
+- Projeto e chave pública em `js/config.js`; cliente em `js/vendor/supabase.js` (supabase-js 2.117.2).
+
 ## Regras do sorteio
 
 1. **Prioridade:** entra primeiro quem jogou menos partidas hoje; empate → quem está há mais tempo

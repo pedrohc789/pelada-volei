@@ -1,6 +1,6 @@
 // Service worker: guarda os arquivos do app para funcionar offline.
 // Ao mudar qualquer arquivo, incremente VERSION para os celulares baixarem a versão nova.
-const VERSION = 'v20';
+const VERSION = 'v21';
 const CACHE = `pelada-${VERSION}`;
 const FILES = [
   './',
@@ -21,12 +21,17 @@ const FILES = [
   'js/balance.js',
   'js/rotation.js',
   'js/wrapped.js',
+  'js/config.js',
+  'js/remoteOps.js',
+  'js/sync.js',
+  'js/vendor/supabase.js',
   'js/views/players.js',
   'js/views/day.js',
   'js/views/match.js',
   'js/views/history.js',
   'js/views/config.js',
   'js/views/wrapped.js',
+  'js/views/entrar.js',
 ];
 
 self.addEventListener('install', (e) => {
