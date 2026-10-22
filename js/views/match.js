@@ -15,7 +15,7 @@ export const title = 'Partida';
 const REASONS = {
   inicio: 'Primeiro jogo do dia — times sorteados.',
   sorteio: 'Times sorteados.',
-  'sorteio-manual': 'Sorteio completo feito pelo organizador.',
+  'sorteio-manual': 'Sorteado de novo pelo organizador entre todos os presentes (o vencedor não fica).',
   'dois-saem': `O vencedor completou ${MAX_STREAK} jogos seguidos — os dois times saíram e houve sorteio novo.`,
   'vencedor-fica': 'Vencedor fica; desafiante montado com quem jogou menos.',
   'vencedor-fica-substituicao': 'Vencedor fica (com substituição de quem saiu); desafiante montado com quem jogou menos.',
@@ -162,8 +162,8 @@ function renderGame(root, ctx, day, pending, matches, byId, name, kick) {
 
   root.querySelector('#reroll').addEventListener('click', async () => {
     selected = null;
-    // Sempre segue o rodízio: com vencedor em quadra, só o desafiante é sorteado de novo.
-    await proposeMatch(day.id, { reroll: true });
+    // Ignora o vencedor em quadra: sorteia de novo entre todos os presentes (prioridade para quem jogou menos).
+    await proposeMatch(day.id, { reroll: true, forceDraw: true });
     ctx.rerender();
   });
   root.querySelector('#undo')?.addEventListener('click', () => undo(day, ctx));

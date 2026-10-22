@@ -55,6 +55,18 @@ describe('Rodízio', () => {
     eq(ms[2].streakA, 2);
   });
 
+  it('sortear de novo ignora o vencedor e sorteia entre todos os presentes', () => {
+    const present = roster(18, makeRng(9));
+    const ms = simulate(present, 1, () => 'A');
+    const m = nextMatch({ present, matches: ms, teamSize: 6, rng: makeRng(3), forceDraw: true });
+    eq(m.reason, 'sorteio-manual');
+    eq(m.streakA, 1);
+    eq(m.streakB, 1);
+    const played = new Set([...ms[0].teamA, ...ms[0].teamB]);
+    const ids = [...m.teamA, ...m.teamB].map((p) => p.id);
+    for (const p of present) if (!played.has(p.id)) assert(ids.includes(p.id), `${p.id} não jogou e ficou fora`);
+  });
+
   it('desafiante sai da fila de quem jogou menos', () => {
     const present = roster(18, makeRng(7));
     const ms = simulate(present, 2, () => 'A');
